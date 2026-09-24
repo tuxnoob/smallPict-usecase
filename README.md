@@ -8,13 +8,13 @@ A collection of lightweight, production-ready image upload mini-services impleme
 
 | Directory | Language / Framework | Database ORM / Driver | Default Port |
 | :--- | :--- | :--- | :--- |
-| **[`smallpict-go`](./smallpict-go)** | Go (Gin) | GORM PostgreSQL | `8002` |
-| **[`smallpict-java`](./smallpict-java)** | Java 17 (Spring Boot 3) | Spring Data JPA / HikariCP | `8004` |
-| **[`smallpict-js`](./smallpict-js)** | Node.js / TypeScript (Express) | `pg` Pool | `8000` |
-| **[`smallpict-php`](./smallpict-php)** | PHP 8.1+ (Native MVC) | PDO PostgreSQL & Guzzle | `8005` |
-| **[`smallpict-python`](./smallpict-python)** | Python 3.9+ (FastAPI) | SQLAlchemy | `5005` |
-| **[`smallpict-ruby`](./smallpict-ruby)** | Ruby 3.0+ (Sinatra) | Sequel ORM | `5005` |
-| **[`smallpict-rust`](./smallpict-rust)** | Rust (Axum 0.7) | SQLx (Async PostgreSQL) | `5005` |
+| **[`smallpict-go`](./smallpict-go)** | Go (Gin) | GORM PostgreSQL | `8001` |
+| **[`smallpict-java`](./smallpict-java)** | Java 17 (Spring Boot 3) | Spring Data JPA / HikariCP | `8002` |
+| **[`smallpict-js`](./smallpict-js)** | Node.js / TypeScript (Express) | `pg` Pool | `8003` |
+| **[`smallpict-php`](./smallpict-php)** | PHP 8.1+ (Native MVC) | PDO PostgreSQL & Guzzle | `8004` |
+| **[`smallpict-python`](./smallpict-python)** | Python 3.9+ (FastAPI) | SQLAlchemy | `8005` |
+| **[`smallpict-ruby`](./smallpict-ruby)** | Ruby 3.0+ (Sinatra) | Sequel ORM | `8006` |
+| **[`smallpict-rust`](./smallpict-rust)** | Rust (Axum 0.7) | SQLx (Async PostgreSQL) | `8007` |
 
 ---
 
@@ -60,7 +60,7 @@ Each subproject includes a `.env.example` file. Copy it to `.env` in the target 
 ```env
 # Application Settings
 APP_NAME="SmallPict Service"
-APP_PORT=5005
+APP_PORT=8001
 APP_HOST=0.0.0.0
 
 # PostgreSQL Database Configuration
@@ -118,13 +118,13 @@ UPLOAD_PATH=./uploads
 
 #### A. Multipart Form-Data (File Upload)
 ```bash
-curl --location 'http://127.0.0.1:5005/upload' \
+curl --location 'http://127.0.0.1/upload' \
   --form 'image=@"/path/to/image.jpg"'
 ```
 
 #### B. JSON Payload (Base64)
 ```bash
-curl --location 'http://127.0.0.1:5005/upload' \
+curl --location 'http://127.0.0.1/upload' \
   --header 'Content-Type: application/json' \
   --data '{
     "name": "sample.jpg",
