@@ -1,0 +1,4 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "python.defaultInterpreterPath": "${workspaceFolder}/smallpict-python/venv/bin/python"
+}
