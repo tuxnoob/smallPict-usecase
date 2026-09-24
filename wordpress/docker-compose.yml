@@ -1,0 +1,44 @@
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    volumes:
+      - ./wp-content:/var/www/html/wp-content
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    environment:
+      - WORDPRESS_DB_NAME=wordpress
+      - WORDPRESS_TABLE_PREFIX=wp_
+      - WORDPRESS_DB_HOST=db
+      - WORDPRESS_DB_USER=root
+      - WORDPRESS_DB_PASSWORD=<input your password>
+      - WORDPRESS_DEBUG=1
+      - WORDPRESS_DEBUG_LOG=1
+      - WORDPRESS_DEBUG_DISPLAY=1
+      - WORDPRESS_AUTH_KEY=<you should generate from wordpress salt>
+      - WORDPRESS_SECURE_AUTH_KEY=<you should generate from wordpress salt>
+      - WORDPRESS_LOGGED_IN_KEY=<you should generate from wordpress salt>
+      - WORDPRESS_NONCE_KEY=<you should generate from wordpress salt>
+      - WORDPRESS_AUTH_SALT=<you should generate from wordpress salt>
+      - WORDPRESS_SECURE_AUTH_SALT=<you should generate from wordpress salt>
+      - WORDPRESS_LOGGED_IN_SALT=<you should generate from wordpress salt>
+      - WORDPRESS_NONCE_SALT=<you should generate from wordpress salt>
+    depends_on:
+      - db
+    restart: always
+    ports:
+      - 8080:80
+
+  db:
+    image: mariadb:latest
+    container_name: db
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=<input your root password>
+      - MYSQL_USER=<input your user>
+      - MYSQL_PASSWORD=<input your password>
+      - MYSQL_DATABASE=wordpress
+    restart: always
+
+volumes:
+  db_data:

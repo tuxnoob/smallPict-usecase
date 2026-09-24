@@ -15,6 +15,7 @@ A collection of lightweight, production-ready image upload mini-services impleme
 | **[`smallpict-python`](./smallpict-python)** | Python 3.9+ (FastAPI) | SQLAlchemy | `8005` |
 | **[`smallpict-ruby`](./smallpict-ruby)** | Ruby 3.0+ (Sinatra) | Sequel ORM | `8006` |
 | **[`smallpict-rust`](./smallpict-rust)** | Rust (Axum 0.7) | SQLx (Async PostgreSQL) | `8007` |
+| **[`wordpress`](./wordpress)** | WordPress CMS (Docker Compose) | MariaDB / MySQL | `8080` |
 
 ---
 
@@ -208,6 +209,210 @@ cd smallpict-rust
 cp .env.example .env
 cargo run
 ```
+
+### 8. WordPress CMS (`wordpress`)
+```bash
+cd wordpress
+# Configure database password & salts in docker-compose.yml
+docker compose up -d
+```
+*(See complete step-by-step instructions in the [WordPress Local Environment (Docker Compose)](#-wordpress-local-environment-docker-compose) section below or in [wordpress/README.md](./wordpress/README.md))*
+
+---
+
+## 🐳 WordPress Local Environment (Docker Compose)
+
+A step-by-step guide to running a local WordPress CMS instance using **Docker Compose** paired with a **MariaDB** database.
+
+### 1. Prerequisites & Docker Installation
+Before proceeding, ensure Docker and Docker Compose are installed on your machine:
+
+- **macOS**:
+  - Download and install [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/) (Apple Silicon / Intel).
+  - Or via Homebrew: `brew install --cask docker`
+  - Lightweight alternative: [OrbStack](https://orbstack.dev/) (`brew install orbstack`)
+- **Linux (Ubuntu/Debian)**:
+  ```bash
+  curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+  sudo usermod -aG docker $USER
+  sudo apt-get update && sudo apt-get install docker-compose-plugin
+  ```
+- **Windows**:
+  - Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) with the WSL 2 backend.
+- **Verify Installation**:
+  ```bash
+  docker --version
+  docker compose version
+  ```
+  *(Note: Modern Docker Compose uses the `docker compose` syntax without a hyphen).*
+
+---
+
+### 2. Directory Structure (`wordpress/`)
+```text
+wordpress/
+├── docker-compose.yml   # Service definitions for WordPress and MariaDB
+├── uploads.ini          # Custom PHP runtime configuration (upload limits, timeouts, etc.)
+├── wp-content/          # Local persistent volume (auto-created) for themes, plugins, and uploads
+└── README.md            # Dedicated WordPress setup documentation
+```
+
+---
+
+### 3. Database & Password Configuration
+Open `smallpict-usecase/wordpress/docker-compose.yml` and configure database passwords in the `environment:` sections:
+
+```yaml
+services:
+  wordpress:
+    environment:
+      - WORDPRESS_DB_NAME=wordpress
+      - WORDPRESS_TABLE_PREFIX=wp_
+      - WORDPRESS_DB_HOST=db
+      - WORDPRESS_DB_USER=root
+      - WORDPRESS_DB_PASSWORD=SecretPassword123!   # <-- Set your database password
+      # ...
+  db:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=SecretPassword123!     # <-- Must EXACTLY match WORDPRESS_DB_PASSWORD
+      - MYSQL_USER=wp_user                         # (Optional) Dedicated database user
+      - MYSQL_PASSWORD=SecretPassword123!          # (Optional) Dedicated user password
+      - MYSQL_DATABASE=wordpress
+```
+
+> **Important Rule**:
+> - If `WORDPRESS_DB_USER` is set to `root`, then `WORDPRESS_DB_PASSWORD` **must exactly match** `MYSQL_ROOT_PASSWORD`.
+> - If using a custom non-root user (`MYSQL_USER`), ensure `WORDPRESS_DB_USER` and `WORDPRESS_DB_PASSWORD` match `MYSQL_USER` and `MYSQL_PASSWORD`.
+
+---
+
+### 4. Generating & Configuring WordPress Salt Keys
+WordPress Salt Keys are cryptographic random strings used to encrypt login cookies, authenticate user sessions, and generate secure nonces.
+
+#### A. Generate Salt Keys
+Generate random security keys directly via the official WordPress API:
+- **Web Browser**: [https://api.wordpress.org/secret-key/1.1/salt/](https://api.wordpress.org/secret-key/1.1/salt/)
+- **Terminal CLI**:
+  ```bash
+  curl -s https://api.wordpress.org/secret-key/1.1/salt/
+  ```
+
+The response output will be:
+```php
+define('AUTH_KEY',         'random_key_1');
+define('SECURE_AUTH_KEY',  'random_key_2');
+define('LOGGED_IN_KEY',    'random_key_3');
+define('NONCE_KEY',        'random_key_4');
+define('AUTH_SALT',        'random_key_5');
+define('SECURE_AUTH_SALT', 'random_key_6');
+define('LOGGED_IN_SALT',   'random_key_7');
+define('NONCE_SALT',       'random_key_8');
+```
+
+#### B. Place Keys into `docker-compose.yml`
+Copy each random string value and paste it into the respective environment variable under the `wordpress` service:
+```yaml
+      - WORDPRESS_AUTH_KEY=random_key_1
+      - WORDPRESS_SECURE_AUTH_KEY=random_key_2
+      - WORDPRESS_LOGGED_IN_KEY=random_key_3
+      - WORDPRESS_NONCE_KEY=random_key_4
+      - WORDPRESS_AUTH_SALT=random_key_5
+      - WORDPRESS_SECURE_AUTH_SALT=random_key_6
+      - WORDPRESS_LOGGED_IN_SALT=random_key_7
+      - WORDPRESS_NONCE_SALT=random_key_8
+```
+
+> [!WARNING]
+> **Important: Handling Dollar Signs (`$`) in Docker Compose**  
+> If any generated salt string contains a dollar sign (`$`), Docker Compose will treat it as an environment variable and substitute it with an empty string.  
+> **Solution**: Escape every `$` by doubling it to `$$` (e.g. `key$123` becomes `key$$123`), or re-run the `curl` generator command until you get a set without any `$` characters.
+
+---
+
+### 5. Running Containers
+1. Navigate to the WordPress directory:
+   ```bash
+   cd smallpict-usecase/wordpress
+   ```
+2. Launch the services in detached mode:
+   ```bash
+   docker compose up -d
+   ```
+   *(or `docker-compose up -d` for legacy versions)*
+3. Check container status:
+   ```bash
+   docker compose ps
+   ```
+   Ensure both `wordpress` and `db` services report a status of `Up`.
+4. Monitor startup logs:
+   ```bash
+   docker compose logs -f
+   ```
+   *(Press `Ctrl + C` to exit the log stream).*
+
+---
+
+### 6. Completing Setup in the Browser
+1. Open your web browser and visit:
+   ```text
+   http://localhost:8080
+   ```
+2. Complete the **WordPress Installation Wizard**:
+   - Choose your preferred language (English, etc.).
+   - Enter your **Site Title**, **Admin Username**, **Admin Password**, and **Email**.
+   - Click **Install WordPress**.
+3. Log into the WordPress Admin Dashboard at:
+   ```text
+   http://localhost:8080/wp-admin
+   ```
+
+---
+
+### 7. PHP Upload Settings (`uploads.ini`)
+PHP runtime limits are configured in `uploads.ini`:
+```ini
+file_uploads = On
+memory_limit = 10M
+upload_max_filesize = 10M
+post_max_size = 20M
+max_execution_time = 600
+```
+To increase limits for testing large image uploads (e.g. for SmallPict plugin optimization testing), edit `uploads.ini` (e.g. `upload_max_filesize = 64M`, `post_max_size = 128M`), then restart WordPress:
+```bash
+docker compose restart wordpress
+```
+
+---
+
+### 8. Docker Management Commands
+
+| Command | Description |
+| :--- | :--- |
+| `docker compose up -d` | Start all services in the background |
+| `docker compose ps` | Check container health and status |
+| `docker compose logs -f wordpress` | Stream real-time logs from WordPress |
+| `docker compose stop` | Pause/stop running containers |
+| `docker compose start` | Resume stopped containers |
+| `docker compose restart` | Restart all containers |
+| `docker compose down` | Stop and remove containers and network |
+| `docker compose down -v` | **Reset Database**: Stop containers and permanently delete database volume `db_data` |
+| `docker compose exec wordpress bash` | Open an interactive bash shell in the WordPress container |
+| `docker compose exec db mariadb -u root -p` | Connect to the MariaDB interactive SQL CLI |
+
+---
+
+### 9. Troubleshooting & FAQ
+- **Port 8080 Conflict / Already in Use**:
+  Change the port mapping under `wordpress.ports` in `docker-compose.yml` from `8080:80` to another port, e.g. `8088:80`, then run `docker compose up -d`. Access WordPress at `http://localhost:8088`.
+- **Error establishing a database connection**:
+  On first run, MariaDB requires ~10–20 seconds to initialize default tables and grant user privileges. Wait a moment and refresh your browser. Verify that `WORDPRESS_DB_PASSWORD` and `MYSQL_ROOT_PASSWORD` match exactly.
+- **Permission Denied on `wp-content/`**:
+  If WordPress fails to upload files or install plugins due to host directory permissions, adjust folder ownership:
+  ```bash
+  sudo chown -R 33:33 wp-content
+  ```
+  *(UID 33 is the default `www-data` user inside the WordPress container).*
 
 ---
 
