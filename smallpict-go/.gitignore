@@ -1,0 +1,11 @@
+.env
+uploads/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+main
+smallpict-go

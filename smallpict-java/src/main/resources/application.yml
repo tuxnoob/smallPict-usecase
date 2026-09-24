@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:8002}
+
+spring:
+  application:
+    name: ${APP_NAME:SmallPict Java Service}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:smallpict}?sslmode=${DB_SSLMODE:disable}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+smallpict:
+  mode: ${SMALLPICT_MODE:locale}
+  base-url: ${SMALLPICT_BASE_URL:https://api.smallpict.app}
+  api-key: ${SMALLPICT_API_KEY:}
+  secret-key: ${SMALLPICT_SECRET_KEY:}
+  format: ${SMALLPICT_FORMAT:auto}
+  quality: ${SMALLPICT_QUALITY:80}
+  upload-path: ${UPLOAD_PATH:./uploads}
